@@ -181,7 +181,7 @@ while update:
                 now = datetime.datetime.now()
                 message["datetimeid"] = now.isoformat()
                 message["value"] = i
-                my_rpi.publish("sensors/lock", json.dumps(message), 1)
+                my_rpi.publish("sensors/rfid", json.dumps(message), 1)
                 lcd.text('Welcome', 1)
                 lcd.text('Home!', 2)
                 sleep(1)
@@ -197,7 +197,7 @@ while update:
                 now = datetime.datetime.now()
                 message["datetimeid"] = now.isoformat()
                 message["value"] = i
-                my_rpi.publish("sensors/lock", json.dumps(message), 1)
+                my_rpi.publish("sensors/rfid", json.dumps(message), 1)
                 print('Unrecognised keycard!')
                 print("UID of unrecognised card is {}".format(uid))
                 lcd.text('Unrecognised', 1)
@@ -245,7 +245,7 @@ while update:
                     now = datetime.datetime.now()
                     message["datetimeid"] = now.isoformat()
                     message["value"] = i
-                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
+                    my_rpi.publish("sensors/camera", json.dumps(message), 1)
                     lcd.text('Welcome', 1)
                     lcd.text('Home!', 2)
                     sleep(1)
@@ -258,7 +258,7 @@ while update:
                     now = datetime.datetime.now()
                     message["datetimeid"] = now.isoformat()
                     message["value"] = i
-                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
+                    my_rpi.publish("sensors/camera", json.dumps(message), 1)
                     lcd.text('Unrecognised', 1)
                     lcd.text('Keycard!', 2)
                     sleep(3)
