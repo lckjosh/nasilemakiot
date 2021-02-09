@@ -21,9 +21,15 @@ chat_id = '388290631'
 adc = MCP3008(channel=0) #example for pubsub input
 host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
 rootCAPath = "Certificates/AmazonRootCA1.pem"
-certificatePath = "Certificates/cb51d7304a-certificate.pem.crt"
+certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
 privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
-
+my_rpi = AWSIoTMQTTClient("p1828034-basicPubSub")
+my_rpi.configureEndpoint(host, 8883)
+my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
+my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
+my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
+my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
 # u = 'lockuser'
 # pw = 'lockpass'
 # h = 'localhost'
@@ -48,31 +54,6 @@ GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(37, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 pwm = GPIO.PWM(11, 50)
 pwm.start(0)
-
-####################### NEW PORTION ############################
-my_rpi = AWSIoTMQTTClient("p1828034-basicPubSub")
-my_rpi.configureEndpoint(host, 8883)
-my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
-
-my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
-my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
-my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
-my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
-
-# Connect and subscribe to AWS IoT
-my_rpi.connect()
-my_rpi.subscribe("sensors/light", 1, customCallback)
-sleep(2)
-
-# Publish to the same topic in a loop forever
-loopCount = 0
-while True:
-    light = round(1024-(adc.value*1024))
-    light = random.randint(1,1024)
-    my_rpi.publish("sensors/light", str(light), 1)
-sleep(5)
-
-#################################################################
 
 while update:
     def customCallback(client, userdata, message):
@@ -243,6 +224,21 @@ while update:
                         '/home/pi/assignment/pic/photo_' + timestring + '.jpg', 'rb'))
         if GPIO.input(37) == GPIO.LOW:
             GPIO.output(40, GPIO.LOW)
+
+
+
+# Connect and subscribe to AWS IoT
+# my_rpi.connect()
+# my_rpi.subscribe("sensors/light", 1, customCallback)
+# sleep(2)
+
+# # Publish to the same topic in a loop forever
+# loopCount = 0
+# while True:
+#     light = round(1024-(adc.value*1024))
+#     light = random.randint(1,1024)
+#     my_rpi.publish("sensors/light", str(light), 1)
+# sleep(5)
 
 # except KeyboardInterrupt:
 #     print('Interrupted')
