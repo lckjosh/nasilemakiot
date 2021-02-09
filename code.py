@@ -4,6 +4,7 @@ from gpiozero import LED, Button
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import random
 from gpiozero import MCP3008
+import datetime as datetime
 import time
 from time import sleep
 import mysql.connector
@@ -15,10 +16,11 @@ import sys
 import os
 import boto3
 import botocore
+import json
 
 my_bot_token = '1481822767:AAGNnf8tFsKQ5LuxuTOah9gZpc9BTXYjVpc'
 chat_id = '388290631'
-adc = MCP3008(channel=0) #example for pubsub input
+adc = MCP3008(channel=0)  # example for pubsub input
 host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
 rootCAPath = "Certificates/AmazonRootCA1.pem"
 certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
@@ -30,6 +32,7 @@ my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
 my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
 my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
 my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
+my_rpi.connect()
 # u = 'lockuser'
 # pw = 'lockpass'
 # h = 'localhost'
@@ -171,20 +174,32 @@ while update:
             print(uid)
             # If card is the authorised card
             if uid == [136, 4, 93, 174, 127] or uid == [8, 138, 147, 144, 129]:
-                # i = 1
+                i = 1
                 # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
                 # cursor.execute(sql, {'val': i})
                 # cnx.commit()
+                message = {}
+                message["deviceid"] = "deviceid_1828034"
+                now = datetime.datetime.now()
+                message["datetimeid"] = now.isoformat()
+                message["value"] = i
+                my_rpi.publish("sensors/lock", json.dumps(message), 1)
                 lcd.text('Welcome', 1)
                 lcd.text('Home!', 2)
                 sleep(1)
                 lcd.clear()
                 unlockDoor()
             else:
-                # i = 0
+                i = 0
                 # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
                 # cursor.execute(sql, {'val': i})
                 # cnx.commit()
+                message = {}
+                message["deviceid"] = "deviceid_1828034"
+                now = datetime.datetime.now()
+                message["datetimeid"] = now.isoformat()
+                message["value"] = i
+                my_rpi.publish("sensors/lock", json.dumps(message), 1)
                 print('Unrecognised keycard!')
                 print("UID of unrecognised card is {}".format(uid))
                 lcd.text('Unrecognised', 1)
@@ -226,19 +241,18 @@ while update:
             GPIO.output(40, GPIO.LOW)
 
 
-
 # Connect and subscribe to AWS IoT
 # my_rpi.connect()
-# my_rpi.subscribe("sensors/light", 1, customCallback)
+# my_rpi.subscribe("sensors/lock", 1, customCallback)
 # sleep(2)
 
-# # Publish to the same topic in a loop forever
+# Publish to the same topic in a loop forever
 # loopCount = 0
 # while True:
-#     light = round(1024-(adc.value*1024))
-#     light = random.randint(1,1024)
-#     my_rpi.publish("sensors/light", str(light), 1)
-# sleep(5)
+#       light = round(1024-(adc.value*1024))
+#       loopCount = loopCount+1
+#       sleep(5)
+
 
 # except KeyboardInterrupt:
 #     print('Interrupted')
