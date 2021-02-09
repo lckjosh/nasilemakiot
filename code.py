@@ -82,6 +82,13 @@ while update:
         print("Door has been locked")
 
     def botUnlockDoor():
+        i = 1
+        message = {}
+        message["deviceid"] = "deviceid_1828034"
+        now = datetime.datetime.now()
+        message["datetimeid"] = now.isoformat()
+        message["value"] = i
+        my_rpi.publish("control", json.dumps(message), 1)
         unlockDoor()
         return "Door has been unlocked"
 
