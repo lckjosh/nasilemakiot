@@ -1,6 +1,10 @@
 from rpi_lcd import LCD
 import RPi.GPIO as GPIO
 from gpiozero import LED, Button
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+import random
+from gpiozero import MCP3008
+import datetime as datetime
 import time
 from time import sleep
 import mysql.connector
@@ -12,16 +16,30 @@ import sys
 import os
 import boto3
 import botocore
+import json
 
 my_bot_token = '1481822767:AAGNnf8tFsKQ5LuxuTOah9gZpc9BTXYjVpc'
 chat_id = '388290631'
-u = 'lockuser'
-pw = 'lockpass'
-h = 'localhost'
-db = 'lockdatabase'
-cnx = mysql.connector.connect(user=u, password=pw, host=h, database=db)
-cursor = cnx.cursor()
-print("Successfully connected to database!")
+adc = MCP3008(channel=0)  # example for pubsub input
+host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
+rootCAPath = "Certificates/AmazonRootCA1.pem"
+certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
+privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
+my_rpi = AWSIoTMQTTClient("p1828034-basicPubSub")
+my_rpi.configureEndpoint(host, 8883)
+my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
+my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
+my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
+my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
+my_rpi.connect()
+# u = 'lockuser'
+# pw = 'lockpass'
+# h = 'localhost'
+# db = 'lockdatabase'
+# cnx = mysql.connector.connect(user=u, password=pw, host=h, database=db)
+# cursor = cnx.cursor()
+# print("Successfully connected to database!")
 update = True
 # card reading variables
 uid = None
@@ -41,6 +59,13 @@ pwm = GPIO.PWM(11, 50)
 pwm.start(0)
 
 while update:
+    def customCallback(client, userdata, message):
+        print("Received a new message: ")
+        print(message.payload)
+        print("from topic: ")
+        print(message.topic)
+        print("--------------\n\n")
+
     def SetAngle(angle):
         duty = angle / 18 + 2
         GPIO.output(11, True)
@@ -148,9 +173,15 @@ while update:
             # If card is the authorised card
             if uid == [136, 4, 93, 174, 127] or uid == [8, 138, 147, 144, 129]:
                 i = 1
-                sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
-                cursor.execute(sql, {'val': i})
-                cnx.commit()
+                # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
+                # cursor.execute(sql, {'val': i})
+                # cnx.commit()
+                message = {}
+                message["deviceid"] = "deviceid_1828034"
+                now = datetime.datetime.now()
+                message["datetimeid"] = now.isoformat()
+                message["value"] = i
+                my_rpi.publish("sensors/lock", json.dumps(message), 1)
                 lcd.text('Welcome', 1)
                 lcd.text('Home!', 2)
                 sleep(1)
@@ -158,9 +189,15 @@ while update:
                 unlockDoor()
             else:
                 i = 0
-                sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
-                cursor.execute(sql, {'val': i})
-                cnx.commit()
+                # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
+                # cursor.execute(sql, {'val': i})
+                # cnx.commit()
+                message = {}
+                message["deviceid"] = "deviceid_1828034"
+                now = datetime.datetime.now()
+                message["datetimeid"] = now.isoformat()
+                message["value"] = i
+                my_rpi.publish("sensors/lock", json.dumps(message), 1)
                 print('Unrecognised keycard!')
                 print("UID of unrecognised card is {}".format(uid))
                 lcd.text('Unrecognised', 1)
@@ -202,20 +239,47 @@ while update:
                         break
                 if matched:
                     # valid user unlock
+                    i = 1
+                    message = {}
+                    message["deviceid"] = "deviceid_1828034"
+                    now = datetime.datetime.now()
+                    message["datetimeid"] = now.isoformat()
+                    message["value"] = i
+                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
                     lcd.text('Welcome', 1)
                     lcd.text('Home!', 2)
                     sleep(1)
                     lcd.clear()
                     unlockDoor()
                 else:
+                    i = 0
+                    message = {}
+                    message["deviceid"] = "deviceid_1828034"
+                    now = datetime.datetime.now()
+                    message["datetimeid"] = now.isoformat()
+                    message["value"] = i
+                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
                     lcd.text('Unrecognised', 1)
-                    lcd.text('Face!', 2)
+                    lcd.text('Keycard!', 2)
                     sleep(3)
                     lcd.clear()
                     bot.sendMessage(chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
                     bot.sendPhoto(chat_id, photo = open('/home/pi/assignment/pic/photo_' +timestring+ '.jpg', 'rb'))
         if GPIO.input(37) == GPIO.LOW:
             GPIO.output(40, GPIO.LOW)
+
+# Connect and subscribe to AWS IoT
+# my_rpi.connect()
+# my_rpi.subscribe("sensors/lock", 1, customCallback)
+# sleep(2)
+
+# Publish to the same topic in a loop forever
+# loopCount = 0
+# while True:
+#       light = round(1024-(adc.value*1024))
+#       loopCount = loopCount+1
+#       sleep(5)
+
 
 # except KeyboardInterrupt:
 #     print('Interrupted')
