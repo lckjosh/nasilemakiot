@@ -1,6 +1,8 @@
 from rpi_lcd import LCD
 import RPi.GPIO as GPIO
 from gpiozero import LED, Button
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+import random
 import time
 from time import sleep
 import mysql.connector
@@ -15,13 +17,13 @@ import botocore
 
 my_bot_token = '1481822767:AAGNnf8tFsKQ5LuxuTOah9gZpc9BTXYjVpc'
 chat_id = '388290631'
-u = 'lockuser'
-pw = 'lockpass'
-h = 'localhost'
-db = 'lockdatabase'
-cnx = mysql.connector.connect(user=u, password=pw, host=h, database=db)
-cursor = cnx.cursor()
-print("Successfully connected to database!")
+# u = 'lockuser'
+# pw = 'lockpass'
+# h = 'localhost'
+# db = 'lockdatabase'
+# cnx = mysql.connector.connect(user=u, password=pw, host=h, database=db)
+# cursor = cnx.cursor()
+# print("Successfully connected to database!")
 update = True
 # card reading variables
 uid = None
@@ -39,6 +41,8 @@ GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(37, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 pwm = GPIO.PWM(11, 50)
 pwm.start(0)
+
+
 
 while update:
     def SetAngle(angle):
@@ -149,20 +153,20 @@ while update:
             print(uid)
             # If card is the authorised card
             if uid == [136, 4, 93, 174, 127] or uid == [8, 138, 147, 144, 129]:
-                i = 1
-                sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
-                cursor.execute(sql, {'val': i})
-                cnx.commit()
+                # i = 1
+                # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
+                # cursor.execute(sql, {'val': i})
+                # cnx.commit()
                 lcd.text('Welcome', 1)
                 lcd.text('Home!', 2)
                 sleep(1)
                 lcd.clear()
                 unlockDoor()
             else:
-                i = 0
-                sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
-                cursor.execute(sql, {'val': i})
-                cnx.commit()
+                # i = 0
+                # sql = "INSERT INTO lockdata (locking) VALUES (%(val)s)"
+                # cursor.execute(sql, {'val': i})
+                # cnx.commit()
                 print('Unrecognised keycard!')
                 print("UID of unrecognised card is {}".format(uid))
                 lcd.text('Unrecognised', 1)
