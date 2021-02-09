@@ -190,13 +190,16 @@ while update:
                            'sp-p1828034-s3-bucket')
                 uploadToS3('/home/pi/assignment/pic/',
                            'photo_' + timestring + '.jpg', 'sp-p1828034-s3-bucket')
-                matched = compare_faces('base_image.jpg', 'photo_' + timestring + '.jpg', 95)
+                matched = compare_faces(
+                    'base_image.jpg', 'photo_' + timestring + '.jpg', 95)
                 if matched:
                     # valid user unlock
                     print("valid user")
                 else:
-                    bot.sendMessage(chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
-                    bot.sendPhoto(chat_id, photo = open('/home/pi/assignment/pic/photo_' +timestring+ '.jpg', 'rb'))
+                    bot.sendMessage(
+                        chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
+                    bot.sendPhoto(chat_id, photo=open(
+                        '/home/pi/assignment/pic/photo_' + timestring + '.jpg', 'rb'))
         if GPIO.input(37) == GPIO.LOW:
             GPIO.output(40, GPIO.LOW)
 
