@@ -89,15 +89,13 @@ while update:
                     }
                 }
             )
-            print(response)
             for match in response['FaceMatches']:
                 print("Target Face ({Confidence}%)".format(**match['Face']))
                 print("  Similarity : {}%".format(match['Similarity']))
                 return True
-        except InvalidParameterException:
+        except:
             return False
-        finally:
-            return False
+        return False
 
     def uploadToS3(file_path, file_name, bucket_name):
         s3 = boto3.resource('s3')  # Create an S3 resource
@@ -186,20 +184,36 @@ while update:
                 timestring = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
                 camera.capture(
                     '/home/pi/assignment/pic/photo_' + timestring + '.jpg')
-                uploadToS3('/home/pi/assignment', 'base_image.jpg',
+
+                # upload source image
+                for filename in os.listdir('/home/pi/assignment/pic/source_images'):
+                    uploadToS3('/home/pi/assignment/pic/source_images', filename,
                            'sp-p1828034-s3-bucket')
-                uploadToS3('/home/pi/assignment/pic/',
+
+                # upload target image
+                uploadToS3('/home/pi/assignment/pic',
                            'photo_' + timestring + '.jpg', 'sp-p1828034-s3-bucket')
-                matched = compare_faces(
-                    'base_image.jpg', 'photo_' + timestring + '.jpg', 95)
+                
+                # multi-user face recongition
+                matched = False
+                for filename in os.listdir('/home/pi/assignment/pic/source_images'):
+                    matched = compare_faces(filename, 'photo_' + timestring + '.jpg', 95)
+                    if matched:
+                        break
                 if matched:
                     # valid user unlock
-                    print("valid user")
+                    lcd.text('Welcome', 1)
+                    lcd.text('Home!', 2)
+                    sleep(1)
+                    lcd.clear()
+                    unlockDoor()
                 else:
-                    bot.sendMessage(
-                        chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
-                    bot.sendPhoto(chat_id, photo=open(
-                        '/home/pi/assignment/pic/photo_' + timestring + '.jpg', 'rb'))
+                    lcd.text('Unrecognised', 1)
+                    lcd.text('Face!', 2)
+                    sleep(3)
+                    lcd.clear()
+                    bot.sendMessage(chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
+                    bot.sendPhoto(chat_id, photo = open('/home/pi/assignment/pic/photo_' +timestring+ '.jpg', 'rb'))
         if GPIO.input(37) == GPIO.LOW:
             GPIO.output(40, GPIO.LOW)
 
