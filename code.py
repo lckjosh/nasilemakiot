@@ -114,15 +114,13 @@ while update:
                     }
                 }
             )
-            print(response)
             for match in response['FaceMatches']:
                 print("Target Face ({Confidence}%)".format(**match['Face']))
                 print("  Similarity : {}%".format(match['Similarity']))
                 return True
-        except InvalidParameterException:
+        except:
             return False
-        finally:
-            return False
+        return False
 
     def uploadToS3(file_path, file_name, bucket_name):
         s3 = boto3.resource('s3')  # Create an S3 resource
@@ -241,14 +239,28 @@ while update:
                         break
                 if matched:
                     # valid user unlock
+                    i = 1
+                    message = {}
+                    message["deviceid"] = "deviceid_1828034"
+                    now = datetime.datetime.now()
+                    message["datetimeid"] = now.isoformat()
+                    message["value"] = i
+                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
                     lcd.text('Welcome', 1)
                     lcd.text('Home!', 2)
                     sleep(1)
                     lcd.clear()
                     unlockDoor()
                 else:
+                    i = 0
+                    message = {}
+                    message["deviceid"] = "deviceid_1828034"
+                    now = datetime.datetime.now()
+                    message["datetimeid"] = now.isoformat()
+                    message["value"] = i
+                    my_rpi.publish("sensors/lock", json.dumps(message), 1)
                     lcd.text('Unrecognised', 1)
-                    lcd.text('Face!', 2)
+                    lcd.text('Keycard!', 2)
                     sleep(3)
                     lcd.clear()
                     bot.sendMessage(chat_id, "Doorbell has been rung! A photo of the person at your door will be sent shortly..")
