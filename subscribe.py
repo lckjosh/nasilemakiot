@@ -7,9 +7,7 @@ from gpiozero import MCP3008
 import datetime as datetime
 import time
 from time import sleep
-import mysql.connector
 import MFRC522
-import signal
 import telepot
 import picamera
 import sys
