@@ -7,9 +7,7 @@ from gpiozero import MCP3008
 import datetime as datetime
 import time
 from time import sleep
-import mysql.connector
 import MFRC522
-import signal
 import telepot
 import picamera
 import sys
@@ -32,13 +30,7 @@ my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
 my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
 my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
 my_rpi.connect()
-# u = 'lockuser'
-# pw = 'lockpass'
-# h = 'localhost'
-# db = 'lockdatabase'
-# cnx = mysql.connector.connect(user=u, password=pw, host=h, database=db)
-# cursor = cnx.cursor()
-# print("Successfully connected to database!")
+
 update = True
 # card reading variables
 uid = None
@@ -192,20 +184,6 @@ def addFace(client, userdata, message):
         s3.Object('sp-p1828034-s3-bucket', 'source_image1.jpg').put(Body=open('/home/pi/assignment/pic/source_images/source_image1.jpg', 'rb'))
         print("File uploaded")
 
-
-# # Capture SIGINT for cleanup when the script is aborted
-
-
-# def end_read(signal, frame):
-#     global continue_reading
-#     print("Ctrl+C captured, ending read.")
-#     continue_reading = False
-#     pwm.stop()
-#     GPIO.cleanup()
-
-
-# # Hook the SIGINT
-# signal.signal(signal.SIGINT, end_read)
 
 # Create an object of the class MFRC522
 mfrc522 = MFRC522.MFRC522()
