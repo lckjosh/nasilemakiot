@@ -2,7 +2,6 @@ from flask import Flask, render_template, jsonify, request, Response, session, a
 import os
 
 import sys
-import signal
 
 import json
 import numpy
