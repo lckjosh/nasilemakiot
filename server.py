@@ -1,6 +1,6 @@
-from flask import Flask, render_template, jsonify, request,Response
+from flask import Flask, render_template, jsonify, request, Response, session, abort, flash, redirect, url_for
+import os
 
-import mysql.connector
 import sys
 import signal
 
@@ -9,41 +9,64 @@ import numpy
 import datetime
 import decimal
 
-import gevent
-import gevent.monkey
-from gevent.pywsgi import WSGIServer
-from rpi_lcd import LCD
+# import gevent
+# import gevent.monkey
+# from gevent.pywsgi import WSGIServer
 import time
 from time import sleep
-import RPi.GPIO as GPIO
 
-gevent.monkey.patch_all()
+
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+
+# set Web UI credentials
+USERNAME = 'iot'
+PASSWORD = '1qwer$#@!'
+
+# gevent.monkey.patch_all()
+
+host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
+rootCAPath = "Certificates/AmazonRootCA1.pem"
+certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
+privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
+my_rpi = AWSIoTMQTTClient("p1828034-server")
+my_rpi.configureEndpoint(host, 8883)
+my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
+my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+my_rpi.configureDrainingFrequency(2)  # Draining: 2 Hz
+my_rpi.configureConnectDisconnectTimeout(10)  # 10 sec
+my_rpi.configureMQTTOperationTimeout(5)  # 5 sec
+my_rpi.connect()
 
 
 class GenericEncoder(json.JSONEncoder):
-    
-    def default(self, obj):  
+
+    def default(self, obj):
         if isinstance(obj, numpy.generic):
-            return numpy.asscalar(obj) 
-        elif isinstance(obj, datetime.datetime):  
-            return obj.strftime('%Y-%m-%d %H:%M:%S') 
+            return numpy.asscalar(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
-        else:  
-            return json.JSONEncoder.default(self, obj) 
+        else:
+            return json.JSONEncoder.default(self, obj)
+
 
 def data_to_json(data):
-    json_data = json.dumps(data,cls=GenericEncoder)
+    json_data = json.dumps(data, cls=GenericEncoder)
     return json_data
 
-def connect_to_mysql(host,user,password,database):
+
+def connect_to_mysql(host, user, password, database):
     try:
-        cnx = mysql.connector.connect(host=host,user=user,password=password,database=database)
+        cnx = mysql.connector.connect(
+            host=host, user=user, password=password, database=database)
 
         cursor = cnx.cursor()
         print("Successfully connected to database!")
 
-        return cnx,cursor
+        return cnx, cursor
 
     except:
         print(sys.exc_info()[0])
@@ -51,19 +74,19 @@ def connect_to_mysql(host,user,password,database):
 
         return None
 
-def fetch_fromdb_as_json(cnx,cursor,sql):
-    
+
+def fetch_fromdb_as_json(cnx, cursor, sql):
+
     try:
         cursor.execute(sql)
-        row_headers=[x[0] for x in cursor.description] 
+        row_headers = [x[0] for x in cursor.description]
         results = cursor.fetchall()
         data = []
         for result in results:
-            data.append(dict(zip(row_headers,result)))
-        
-        data_reversed = data[::-1]
+            data.append(dict(zip(row_headers, result)))
 
-        data = {'data':data_reversed}
+        data_reversed = data[::-1]
+        data = {'data': data_reversed}
 
         return data_to_json(data)
 
@@ -72,73 +95,145 @@ def fetch_fromdb_as_json(cnx,cursor,sql):
         print(sys.exc_info()[1])
         return None
 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(11, GPIO.OUT)
-pwm=GPIO.PWM(11, 50)
-pwm.start(0)
-
-def SetAngle(angle):
-    print("hellokenneth")
-    duty = angle / 18 + 2
-    GPIO.output(11, True)
-    pwm.ChangeDutyCycle(duty)
-    sleep(1)
-    GPIO.output(11, False)
-    pwm.ChangeDutyCycle(0)
-    print("hellokenneth")
 
 def unlock():
-    print("helloprint")
-    SetAngle(0)
-    sleep(3)
-    SetAngle(180)
-    return "unlock"
+    print("Door will be unlocked.")
+    # SetAngle(0)
+    message2 = {}
+    message2["deviceid"] = "deviceid_1828034"
+    now = datetime.datetime.now()
+    message2["datetimeid"] = now.isoformat()
+    message2["rfid"] = 0
+    message2["camera"] = 0
+    message2["bot"] = 0
+    message2["webcontrol"] = 1
+    message2["servo"] = 1
+    my_rpi.publish("lockdata", json.dumps(message2), 1)
+    my_rpi.publish("webcontrol", str(1), 1)
+    sleep(5)
+    # SetAngle(180)
+    message2 = {}
+    message2["deviceid"] = "deviceid_1828034"
+    now = datetime.datetime.now()
+    message2["datetimeid"] = now.isoformat()
+    message2["rfid"] = 0
+    message2["camera"] = 0
+    message2["bot"] = 0
+    message2["webcontrol"] = 0
+    message2["servo"] = 0
+    my_rpi.publish("lockdata", json.dumps(message2), 1)
+    print("Door has been locked")
 
-def lock():
-    SetAngle(180)
-    return "lock"
+    return "Unlocked"
 
 
 app = Flask(__name__)
 
-@app.route("/api/getdata",methods = ['POST', 'GET'])
+
+@app.route("/api/getdata", methods=['POST', 'GET'])
 def apidata_getdata():
     if request.method == 'POST':
         try:
-            host='localhost'; user='lockuser'; password='lockpass'; database='lockdatabase';
-            sql="SELECT * FROM lockdata ORDER BY datetimeinfo DESC LIMIT 10"
-            cnx,cursor = connect_to_mysql(host,user,password,database)
-            json_data = fetch_fromdb_as_json(cnx,cursor,sql)
-            loaded_r = json.loads(json_data)
-            data = {'chart_data': loaded_r, 'title': "IOT Data"}
+            dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+            table = dynamodb.Table('LockTable')
+
+            startdate = '2021'
+
+            response = table.query(
+                KeyConditionExpression=Key('deviceid').eq('deviceid_1828034')
+                & Key('datetimeid').begins_with(startdate),
+                ScanIndexForward=False
+            )
+
+            items = response['Items']
+
+            n = 10  # limit to last 10 items
+            data = items[:n]
+            data_reversed = data[::-1]
+
+            data = {'chart_data': data_to_json(data_reversed),
+                    'title': "LockAI Data"}
             return jsonify(data)
+
         except:
             print(sys.exc_info()[0])
             print(sys.exc_info()[1])
 
-@app.route("/")
-def chartsimple():
-    return render_template('index.html')
+
+@app.route("/getRealTime", methods=['POST', 'GET'])
+def getLight():
+    if request.method == 'POST':
+        try:
+            dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+            table = dynamodb.Table('LockTable')
+
+            startdate = '2021'
+
+            response = table.query(
+                KeyConditionExpression=Key('deviceid').eq('deviceid_1828034')
+                & Key('datetimeid').begins_with(startdate),
+                ScanIndexForward=False
+            )
+
+            items = response['Items']
+
+            n = 1  # limit to last 10 items
+            data = items[:n]
+            data_reversed = data[::-1]
+
+            return jsonify(data_to_json(data_reversed))
+        except:
+            print(sys.exc_info()[0])
+            print(sys.exc_info()[1])
+
+
+@app.route('/')
+def home():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        return render_template('index.html')
+
 
 @app.route("/writeLOCK/<status>")
 def writePin(status):
     if status == 'unlock':
         print("statusunlock")
-        response = unlock()
-    else:
-        response = lock()
+        unlock()
+    return render_template('index.html')
 
-    return response
+
+@app.route("/addFace")
+def addFace():
+    my_rpi.publish("addface", str(1), 1)
+    return render_template('index.html')
+
+
+@app.route('/login', methods=['POST'])
+def do_admin_login():
+    if request.form['password'] == PASSWORD and request.form['username'] == USERNAME:
+        session['logged_in'] = True
+    else:
+        flash('wrong password!')
+    return redirect(url_for('home'))
+
+
+@app.route("/logout")
+def logout():
+    session['logged_in'] = False
+    return redirect(url_for('home'))
+
 
 if __name__ == '__main__':
-   try:
+    try:
         print('Server waiting for requests')
-        http_server = WSGIServer(('0.0.0.0', 8001), app)
-        app.debug = True
-        http_server.serve_forever()
-   except:
+        app.secret_key = os.urandom(12)
+        # http_server = WSGIServer(('0.0.0.0', 8001), app)
+        # app.debug = True
+        # http_server.serve_forever()
+        app.run(debug=True, port=8001, host="0.0.0.0")
+    except:
         print("Exception")
         import sys
         print(sys.exc_info()[0])
         print(sys.exc_info()[1])
-
