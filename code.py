@@ -312,4 +312,3 @@ while continue_reading:
                     '/home/pi/assignment/pic/photo_' + timestring + '.jpg', 'rb'))
     if GPIO.input(37) == GPIO.LOW:
         GPIO.output(40, GPIO.LOW)
-        
