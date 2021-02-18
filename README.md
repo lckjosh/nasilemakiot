@@ -13,6 +13,7 @@ The application is a Smart Locck that seeks to make securing the front door of e
 
 
 How does the final RPI set-up looks like?
+![Alt text](README-images/hardware_setup.png?raw=true)
 
 
 
