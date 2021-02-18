@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>LockAI - Dashboard</title>
+	<link href="static/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/css/font-awesome.min.css" rel="stylesheet">
+	<link href="static/css/datepicker3.css" rel="stylesheet">
+	<link href="static/css/styles.css" rel="stylesheet">
+
+	<!--Custom Font-->
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i,600,600i,700,700i"
+		rel="stylesheet">
+	<!--[if lt IE 9]>
+	<script src="js/html5shiv.js"></script>
+	<script src="js/respond.min.js"></script>
+	<![endif]-->
+	<style>
+		#chartDiv {
+			width: 100%;
+		}
+	</style>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript">
+		google.charts.load('current', { 'packages': ['corechart', 'table'] });
+		// Set a callback to run when the Google Visualization API is loaded.
+		google.charts.setOnLoadCallback(googlecharts_is_ready);
+
+		var chart;
+		var graphdata;
+
+		function reset_status_messages() {
+			$("#status").html("")
+		}
+
+		function googlecharts_is_ready() {
+		}
+
+		function getNewData() {
+			$("#status").html("Fetching data to plot graph...");
+
+			jQuery.ajax({
+				url: "/api/getdata",
+				type: 'POST',
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.log("Error while ajax:" + textStatus)
+				},
+				success: function (ndata, textStatus, xhr) {
+					//console.log(ndata)
+
+					//console.log(ndata.chart_data)
+					$("#status").html("Data fetched! Now plotting graph!");
+					chartdata = ndata.chart_data
+					graphdata = createDataTable(chartdata)
+					drawLineChart(graphdata)
+					drawDataTable(graphdata)
+					$("#status").html("Graph plotted");
+				}//end success
+			});//end ajax
+		} //end getNewData
+
+		function createDataTable(newdata) {
+			graphdata = new google.visualization.DataTable();
+			graphdata.addColumn('string', 'Time');
+			graphdata.addColumn('number', 'RFID');
+			graphdata.addColumn('number', 'Camera');
+			graphdata.addColumn('number', 'Bot');
+			graphdata.addColumn('number', 'Web Control');
+			var newdata = JSON.parse(newdata);
+
+			for (index = 0; index < newdata.length; index++) {
+
+				datetime = (newdata[index].datetimeid)
+				datetime = datetime.substring(0, 19) //+ "+0000"             
+				jsdatetime = new Date(Date.parse(datetime));
+				jstime = jsdatetime.toLocaleTimeString();
+				rfid = parseInt(newdata[index].rfid);
+				camera = parseInt(newdata[index].camera);
+				bot = parseInt(newdata[index].bot);
+				webcontrol = parseInt(newdata[index].webcontrol);
+				graphdata.addRows([[jstime, rfid, camera, bot, webcontrol]]);
+			}//end for
+			return graphdata
+		}
+
+		function drawDataTable(graphdata) {
+			var table = new google.visualization.Table(document.getElementById('table_div'));
+			table.draw(graphdata, { showRowNumber: true, width: '100%', height: '100%' });
+
+		}//end drawTable
+
+		function drawLineChart(graphdata) {
+			chart = new google.visualization.LineChart(
+				document.getElementById('chart_div'));
+			chart.draw(graphdata, {
+				legend: 'bottom', vAxis: { baseline: 0 }
+				// colors: ['#A0D100']
+			});
+			return
+		} //end drawChart
+
+		$(document).ready(function () {
+			reset_status_messages()
+
+			setInterval(function () {
+				getNewData()
+			}, 3000);
+		});
+
+		function unlock() {
+			$.ajax({
+				url: "writeLOCK/unlock",
+			})
+		}
+
+		$(document).ready(function () {
+			$("#b1").click(function () {
+				unlock();
+			});
+
+		});
+
+		function addFace() {
+			$.ajax({
+				url: "/addFace",
+			})
+		}
+
+		$(document).ready(function () {
+			$("#b2").click(function () {
+				addFace();
+			});
+
+		});
+
+	</script>
+
+	<script>
+		function getRealTime() {
+			jQuery.ajax({
+				url: "/getRealTime",
+				type: 'POST',
+				success: function (data) {
+					var data = JSON.parse(data);
+					console.log(data)
+					if (data[0].rfid == 0) {
+						data[0].rfid = "No Input";
+					} else if (data[0].rfid == 1) {
+						data[0].rfid = "Authenticated";
+					} else {
+						data[0].rfid = "Denied";
+					}
+
+					if (data[0].camera == 0) {
+						data[0].camera = "No Input";
+					} else if (data[0].camera == 1) {
+						data[0].camera = "Authenticated";
+					} else {
+						data[0].camera = "Denied";
+					}
+
+					if (data[0].servo == 0) {
+						data[0].servo = "Locked";
+					} else {
+						data[0].servo = "Unlocked";
+					}
+					console.log(data[0].rfid)
+					console.log(data[0].camera)
+					console.log(data[0].servo)
+					$("#currentRfid").html(data[0].rfid);
+					$("#currentCamera").html(data[0].camera);
+					$("#currentServo").html(data[0].servo);
+				}//end success
+			});//end ajax
+		} //end 
+
+
+		$(document).ready(function () {
+
+			setInterval(function () {
+				getRealTime();
+			}, 1000);
+
+		});
+
+	</script>
+
+
+
+</head>
+
+<body>
+	<nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<!-- <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+					data-target="#sidebar-collapse"><span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span></button> -->
+				<a class="navbar-brand" href="#"><span>Lock</span>AI</a>
+				<ul class="nav navbar-top-links navbar-right">
+					<li class="dropdown"><button type="button" class="btn btn-sm btn-success" id="b2">Add Face</button>
+					</li>
+					<li class="dropdown"><a class="dropdown-toggle count-info" href="/logout">
+							<em class="fa fa-sign-out"></em>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div><!-- /.container-fluid -->
+	</nav>
+
+	<div class="col-sm-8 col-sm-offset-2 col-lg-10 col-lg-offset-1 main">
+
+		<div class="row">
+			<div class="col-lg-12">
+				<h1 class="page-header">Dashboard</h1>
+			</div>
+		</div>
+		<!--/.row-->
+
+		<div class="panel panel-container">
+			<div class="row">
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-orange panel-widget border-right">
+						<div class="row no-padding">
+							<em class="fa fa-xl fa-id-card-o color-blue"></em>
+							<div class="large"><span id="currentRfid"></span></div>
+							<div class="text-muted">RFID</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-orange panel-widget border-right">
+						<div class="row no-padding">
+							<em class="fa fa-xl fa-camera color-red"></em>
+							<div class="large"><span id="currentCamera"></span></div>
+							<div class="text-muted">Camera</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-orange panel-widget border-right">
+						<div class="row no-padding">
+							<em class="fa fa-xl fa-lock color-orange"></em>
+							<div class="large"><span id="currentServo"></span></div>
+							<div class="text-muted">Lock</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-orange panel-widget border-right">
+						<div class="row no-padding">
+							<em class="fa fa-xl color-red"></em>
+							<div class="large"><button type="button" class="btn btn-sm btn-danger"
+									id="b1">Unlock</button></div>
+							<div class="text-muted"></div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<!--/.row-->
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						Past Values
+					</div>
+					<div class="panel-body">
+						<div class="canvas-wrapper">
+							<div>Legend:</div>
+							<div>0 - No Input</div>
+							<div>1 - Authenticated</div>
+							<div>2 - Denied</div>
+							<div id="chart_div" style="width:100%"></div>
+							<div id="table_div" style="width:50%; margin: 50px auto"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--/.main-->
+
+	<script src="static/js/jquery-1.11.1.min.js"></script>
+	<script src="static/js/bootstrap.min.js"></script>
+	<script src="static/js/chart.min.js"></script>
+	<script src="static/js/chart-data.js"></script>
+	<script src="static/js/easypiechart.js"></script>
+	<script src="static/js/easypiechart-data.js"></script>
+	<script src="static/js/bootstrap-datepicker.js"></script>
+	<script src="static/js/custom.js"></script>
+	<script>
+		window.onload = function () {
+			var chart1 = document.getElementById("line-chart").getContext("2d");
+			window.myLine = new Chart(chart1).Line(lineChartData, {
+				responsive: true,
+				scaleLineColor: "rgba(0,0,0,.2)",
+				scaleGridLineColor: "rgba(0,0,0,.05)",
+				scaleFontColor: "#c5c7cc"
+			});
+		};
+	</script>
+
+</body>
+
+</html>
