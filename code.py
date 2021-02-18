@@ -16,13 +16,13 @@ import boto3
 import botocore
 import json
 
-my_bot_token = '1481822767:AAGNnf8tFsKQ5LuxuTOah9gZpc9BTXYjVpc'
-chat_id = '388290631'
-host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
-rootCAPath = "Certificates/AmazonRootCA1.pem"
-certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
-privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
-my_rpi = AWSIoTMQTTClient("p1828034-client")
+my_bot_token = 'TELEGRAM_HTTP_API'
+chat_id = 'CHAT_ID'
+host = "REST_API_ENDPOINT"
+rootCAPath = "ROOT_CA_PATH"
+certificatePath = "CERTIFICATE_PATH"
+privateKeyPath = "PRIVATE_KEY_PATH"
+my_rpi = AWSIoTMQTTClient("ADMIN_NUMBER_CLIENT")
 my_rpi.configureEndpoint(host, 8883)
 my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
 my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
