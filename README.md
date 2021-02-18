@@ -258,11 +258,28 @@ sudo pip install boto3 flask numpy AWSIoTPythonSDK
 
 # Section 5 - Run Program
 
-1. Run "code.py" and "subscribe.py" on the Raspberry Pi 
+1. Login to your AWS Educate account and click on “Account Details”.
 
-2. Transfer the "assignment" folder to the home folder of the EC2 instance
+2. Click “Show” beside AWS CLI:
 
-3. Run the following commands on the EC2 instance:
+    ![Alt text](README-images/aws_cli_show.png?raw=true)
+
+3. Copy the credentials given to your clipboard:
+
+    ![Alt text](README-images/aws_credentials.png?raw=true)
+
+4. On both the Raspberry Pi and the EC2 instance, run the following commands:
+```
+rm ~/.aws/credentials
+nano ~/.aws/credentials
+```
+Paste the credentials into the editor and press Ctrl-O and then Ctrl-X to save.
+
+5. Run "code.py" and "subscribe.py" on the Raspberry Pi 
+
+6. Transfer the "assignment" folder to the home folder of the EC2 instance
+
+7. Run the following commands on the EC2 instance:
 ```
 python3.8 -m venv ~/assignment/env
 source ~/assignment/env/bin/activate
@@ -271,15 +288,15 @@ pip3 install boto3 flask numpy
 python3.8 server.py
 ```
 
-4. Navigate to port 8001 of your EC2 instance. The Public IPv4 DNS can be found at AWS EC2, Instances, Click on your instance ID:
+8. Navigate to port 8001 of your EC2 instance. The Public IPv4 DNS can be found at AWS EC2, Instances, Click on your instance ID:
 
 ![Alt text](README-images/public_dns_ec2.png?raw=true)
  
-5. Log in with your credentials in Section 5 step 5.
+9. Log in with your credentials in Section 5 step 5.
 
-6. Point the Picamera at your face and click "Add Face" in the top right hand corner of the web interface to add yourself as a valid user for facial recognition.
+10. Point the Picamera at your face and click "Add Face" in the top right hand corner of the web interface to add yourself as a valid user for facial recognition.
 
-7. Have fun!
+11. Have fun!
 
 
 # Section 6 - References
