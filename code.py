@@ -16,13 +16,13 @@ import boto3
 import botocore
 import json
 
-my_bot_token = '1481822767:AAGNnf8tFsKQ5LuxuTOah9gZpc9BTXYjVpc'
-chat_id = '388290631'
-host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
-rootCAPath = "Certificates/AmazonRootCA1.pem"
-certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
-privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
-my_rpi = AWSIoTMQTTClient("p1828034-client")
+my_bot_token = 'TELEGRAM_HTTP_API'
+chat_id = 'CHAT_ID'
+host = "REST_API_ENDPOINT"
+rootCAPath = "ROOT_CA_PATH"
+certificatePath = "CERTIFICATE_PATH"
+privateKeyPath = "PRIVATE_KEY_PATH"
+my_rpi = AWSIoTMQTTClient("ADMIN_NUMBER_CLIENT")
 my_rpi.configureEndpoint(host, 8883)
 my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
 my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
@@ -146,43 +146,6 @@ def uploadToS3(file_path, file_name, bucket_name):
     full_path = file_path + "/" + file_name
     s3.Object(bucket_name, file_name).put(Body=open(full_path, 'rb'))
     print("File uploaded")
-
-
-def manualUnlock(client, userdata, message):
-    print("Received a new message: ")
-    print(message.payload)
-    print("from topic: ")
-    print(message.topic)
-    print("--------------\n\n")
-    if message.payload == '1':
-        unlockDoor()
-
-
-def addFace(client, userdata, message):
-    print("Received a new message: ")
-    print(message.payload)
-    print("from topic: ")
-    print(message.topic)
-    print("--------------\n\n")
-    if message.payload == '1':
-        # with picamera.PiCamera() as camera:
-        #     now = datetime.datetime.now()
-        #     timestring = now.isoformat()
-        #     print("before camera")
-        #     camera.capture(
-        #         '/home/pi/assignment/pic/source_images/source_image_' + timestring + '.jpg')
-        s3 = boto3.resource('s3')  # Create an S3 resource
-
-        try: 
-            s3.meta.client.head_bucket(Bucket='sp-p1828034-s3-bucket')
-        except botocore.exceptions.ClientError as e:
-            error_code = int(e.response['Error']['Code'])
-            if error_code == 404:
-                print("error bucket not found")
-
-        # Upload the file
-        s3.Object('sp-p1828034-s3-bucket', 'source_image1.jpg').put(Body=open('/home/pi/assignment/pic/source_images/source_image1.jpg', 'rb'))
-        print("File uploaded")
 
 
 # Create an object of the class MFRC522
@@ -349,28 +312,4 @@ while continue_reading:
                     '/home/pi/assignment/pic/photo_' + timestring + '.jpg', 'rb'))
     if GPIO.input(37) == GPIO.LOW:
         GPIO.output(40, GPIO.LOW)
-
-# Connect and subscribe to AWS IoT
-# my_rpi.connect()
-# sleep(2)
-
-# Publish to the same topic in a loop forever
-# loopCount = 0
-# while True:
-#       light = round(1024-(adc.value*1024))
-#       loopCount = loopCount+1
-#       sleep(5)
-
-
-# except KeyboardInterrupt:
-#     print('Interrupted')
-#     pwm.stop()
-#     GPIO.cleanup()
-#     try:
-#         sys.exit(0)
-#     except SystemExit:
-#         os._exit(0)
-
-
-#     # pwm.stop()
-#     # GPIO.cleanup()
+        

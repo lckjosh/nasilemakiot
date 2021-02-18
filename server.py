@@ -25,11 +25,11 @@ PASSWORD = '1qwer$#@!'
 
 # gevent.monkey.patch_all()
 
-host = "a1e7xdnu3fplgg-ats.iot.us-east-1.amazonaws.com"
-rootCAPath = "Certificates/AmazonRootCA1.pem"
-certificatePath = "Certificates/cb51d7304a-certificate.pem.crt.txt"
-privateKeyPath = "Certificates/cb51d7304a-private.pem.key"
-my_rpi = AWSIoTMQTTClient("p1828034-server")
+host = "REST_API_ENDPOINT"
+rootCAPath = "ROOT_CA_PATH"
+certificatePath = "CERTIFICATE_PATH"
+privateKeyPath = "PRIVATE_KEY_PATH"
+my_rpi = AWSIoTMQTTClient("ADMIN_NUMBER_CLIENT2")
 my_rpi.configureEndpoint(host, 8883)
 my_rpi.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
 my_rpi.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
