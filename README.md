@@ -28,7 +28,7 @@ LockAI is a Smart Lock that seeks to make securing the front door of every home 
 
 # Section 2 Hardware requirements 
 ## Hardware checklist
-- Raspberry PI
+- Raspberry Pi
 - PiCamera
 - Buzzer
 - Servo Motor
@@ -292,7 +292,7 @@ python3.8 server.py
 
 ![Alt text](README-images/public_dns_ec2.png?raw=true)
  
-9. Log in with your credentials in Section 5 step 5.
+9. Log in with your credentials in Section 4 step 5.
 
 10. Point the Picamera at your face and click "Add Face" in the top right hand corner of the web interface to add yourself as a valid user for facial recognition.
 
