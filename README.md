@@ -296,8 +296,11 @@ python3.8 server.py
 
 10. Point the Picamera at your face and click "Add Face" in the top right hand corner of the web interface to add yourself as a valid user for facial recognition.
 
-11. Have fun!
+11. The telegram bot will send you notifications and can be used to control the lock as shown below:
 
+![Alt text](README-images/telegraminterface.png?raw=true)
+
+12. Have fun!
 
 # Section 6 - References
 https://gist.github.com/alexcasalboni/0f21a1889f09760f8981b643326730ff
