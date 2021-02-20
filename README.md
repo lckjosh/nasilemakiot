@@ -284,7 +284,7 @@ Paste the credentials into the editor and press Ctrl-O and then Ctrl-X to save.
 python3.8 -m venv ~/assignment/env
 source ~/assignment/env/bin/activate
 cd ~/assignment
-pip3 install boto3 flask numpy
+pip3 install boto3 flask numpy AWSIoTPythonSDK
 python3.8 server.py
 ```
 
