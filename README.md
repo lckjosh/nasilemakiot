@@ -79,7 +79,7 @@ GPIO Pins:
 ### Install Dependencies
 1. Install the needed dependencies on the Raspberry Pi with the following command:
 ```
-sudo pip install AWSIoTPythonSDK paho-mqtt awscli botocore boto3
+sudo pip install AWSIoTPythonSDK paho-mqtt awscli botocore boto3 telepot
 ```
 
 ### Create a 'Thing'
